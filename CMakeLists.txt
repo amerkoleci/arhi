@@ -236,16 +236,6 @@ cmake_dependent_option(ARHI_VULKAN "Enable Vulkan backend" ON "ARHI_HAS_VULKAN" 
 cmake_dependent_option(ARHI_D3D12 "Enable D3D12 backend" ON "ARHI_HAS_D3D12" OFF)
 cmake_dependent_option(ARHI_METAL "Enable Metal backend" ON "ARHI_HAS_METAL" OFF)
 
-# README and LICENSE
-if(ARHI_INSTALL)
-    message(STATUS "Generating install")
-    install (FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/README.md
-        ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE
-        DESTINATION .
-    )
-endif ()
-
 # Print current build configuration
 message(STATUS "Engine version: ${ARHI_VERSION}")
 message(STATUS "GIT Revision ID: ${ARHI_REVISION_ID}")
@@ -279,3 +269,66 @@ endif()
 
 message(STATUS "  Install         ${ARHI_INSTALL}")
 message(STATUS "  Samples         ${ARHI_BUILD_SAMPLES}")
+
+# Add subdirectories
+add_subdirectory(third_party)
+
+# Setup the main library
+set(TARGET_NAME arhi)
+
+set(SOURCE_FILES
+    include/arhi.h
+    src/arhi_internal.h
+    src/arhi.cpp
+    src/arhi_check.c
+)
+
+add_library(${TARGET_NAME} ${ARHI_LIBRARY_TYPE} ${SOURCE_FILES})
+target_include_directories(${TARGET_NAME}
+	PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+	PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+)
+
+target_compile_definitions(${TARGET_NAME} PRIVATE ARHI_IMPLEMENTATION)
+if (ARHI_BUILD_SHARED)
+    target_compile_definitions (${TARGET_NAME} PRIVATE ARHI_SHARED_LIBRARY)
+endif ()
+
+if (ARHI_VULKAN)
+    target_sources(${TARGET_NAME} PRIVATE
+        src/vulkan/arhi_vulkan_funcs.h
+        src/vulkan/arhi_vulkan.cpp
+    )
+
+    target_link_libraries(${TARGET_NAME} PRIVATE vulkan)
+    target_compile_definitions (${TARGET_NAME} PRIVATE ARHI_VULKAN)
+endif()
+
+if (ARHI_D3D12)
+    target_sources(${TARGET_NAME} PRIVATE
+        src/d3d12/arhi_d3d12.cpp
+    )
+    target_link_libraries(${TARGET_NAME} PRIVATE DirectX-Headers)
+    target_compile_definitions (${TARGET_NAME} PRIVATE ARHI_D3D12)
+endif()
+
+if (ARHI_METAL)
+    target_sources(${TARGET_NAME} PRIVATE
+        src/metal/arhi_metal.cpp
+    )
+    target_compile_definitions (${TARGET_NAME} PRIVATE ARHI_METAL)
+    target_link_libraries(${TARGET_NAME} PRIVATE arhi-metal-cpp)
+endif()
+
+# Add samples subdirectoy
+#add_subdirectory(samples)
+
+# README and LICENSE
+if(ARHI_INSTALL)
+    message(STATUS "Generating install")
+    install (FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/README.md
+        ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE
+        DESTINATION .
+    )
+endif ()
