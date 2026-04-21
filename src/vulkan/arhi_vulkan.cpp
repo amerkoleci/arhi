@@ -40,6 +40,7 @@ ARHI_ENABLE_WARNINGS()
 #endif
 
 #include <inttypes.h>
+#include <string>
 #include <algorithm>
 #include <vector>
 #include <deque>
@@ -933,17 +934,17 @@ bool VulkanRHIFactory::Init(const RHIFactoryDesc* desc)
         }
     }
 #else
-    if (instance->xcbSurface)
+    if (xcbSurface)
     {
         instanceExtensions.push_back("VK_KHR_xcb_surface");
     }
     else
     {
-        ALIMER_ASSERT(instance->xlibSurface);
+        ARHI_ASSERT(xlibSurface);
         instanceExtensions.push_back("VK_KHR_xlib_surface");
     }
 
-    if (instance->waylandSurface)
+    if (waylandSurface)
     {
         instanceExtensions.push_back("VK_KHR_wayland_surface");
     }
@@ -1243,7 +1244,7 @@ RHISurface VulkanRHIFactory::CreateSurface(RHISurfaceSource source)
             surfaceCreateInfo.display = source->waylandDisplay;
             surfaceCreateInfo.surface = source->waylandSurface;
 
-            result = vkCreateWaylandSurfaceKHR(instance, &surfaceCreateInfo, nullptr, &vk_surface);
+            result = vkCreateWaylandSurfaceKHR(handle, &surfaceCreateInfo, nullptr, &vk_surface);
         }
         break;
 #endif

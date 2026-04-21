@@ -253,12 +253,16 @@ ARHI_API RHISurfaceSource RHISurfaceSourceCreateFromWin32(void* hwnd)
         arhi_log_error("Win32: Invalid vulkan hwnd handle");
         return nullptr;
     }
-#endif
 
     RHISurfaceSource handle = new RHISurfaceSourceImpl();
     handle->type = RHISurfaceSourceType::WindowsHWND;
     handle->hwnd = static_cast<HWND>(hwnd);
     return handle;
+#else
+    ARHI_UNUSED(hwnd);
+    arhi_log_error("Win32 surface source is not supported on this platform");
+    return nullptr;
+#endif
 }
 
 RHISurfaceSource RHISurfaceSourceCreateFromAndroid(void* window)
