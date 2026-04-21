@@ -54,16 +54,11 @@ typedef struct GPUComputePassEncoder        GPUComputePassEncoder;
 typedef struct GPURenderPassEncoder         GPURenderPassEncoder;
 typedef struct GPUBuffer                    GPUBuffer;
 typedef struct GPUTexture                   GPUTexture;
-typedef struct GPUSampler                   GPUSampler;
-typedef struct GPUQueryHeap                 GPUQueryHeap;
-typedef struct GPUBindGroupLayoutImpl* GPUBindGroupLayout;
-typedef struct GPUBindGroupImpl* GPUBindGroup;
-typedef struct GPUPipelineLayoutImpl* GPUPipelineLayout;
 typedef struct GPUComputePipeline           GPUComputePipeline;
-typedef struct GPURenderPipelineImpl* GPURenderPipeline;
+typedef struct GPURenderPipelineImpl*       GPURenderPipeline;
 
 /* Types */
-typedef uint64_t GPUDeviceAddress;
+typedef uint64_t GPUAddress;
 
 /* Constants */
 #define GPU_MAX_ADAPTER_NAME_SIZE  (256u)
@@ -73,171 +68,169 @@ typedef uint64_t GPUDeviceAddress;
 #define GPU_LOD_CLAMP_NONE (1000.0F)
 
 /* Enums */
+typedef enum RHILogLevel {
+    RHILogLevel_Off = 0,
+    RHILogLevel_Trace = 1,
+    RHILogLevel_Debug = 2,
+    RHILogLevel_Info = 3,
+    RHILogLevel_Warn = 4,
+    RHILogLevel_Error = 5,
+    RHILogLevel_Fatal = 6,
 
+    RHILogLevel_Count,
+    _RHILogLevel_Force32 = 0x7FFFFFFF
+} RHILogLevel;
 
-typedef enum LogLevel {
-    LogLevel_Off = 0,
-    LogLevel_Trace = 1,
-    LogLevel_Debug = 2,
-    LogLevel_Info = 3,
-    LogLevel_Warn = 4,
-    LogLevel_Error = 5,
-    LogLevel_Fatal = 6,
-
-    LogLevel_Count,
-    _LogLevel_Force32 = 0x7FFFFFFF
-} LogLevel;
-
-typedef enum PixelFormat {
-    PixelFormat_Undefined = 0,
+typedef enum RHIPixelFormat {
+    RHIPixelFormat_Undefined = 0,
     // 8-bit formats
-    PixelFormat_R8Unorm,
-    PixelFormat_R8Snorm,
-    PixelFormat_R8Uint,
-    PixelFormat_R8Sint,
+    RHIPixelFormat_R8Unorm,
+    RHIPixelFormat_R8Snorm,
+    RHIPixelFormat_R8Uint,
+    RHIPixelFormat_R8Sint,
     // 16-bit formats
-    PixelFormat_R16Unorm,
-    PixelFormat_R16Snorm,
-    PixelFormat_R16Uint,
-    PixelFormat_R16Sint,
-    PixelFormat_R16Float,
-    PixelFormat_RG8Unorm,
-    PixelFormat_RG8Snorm,
-    PixelFormat_RG8Uint,
-    PixelFormat_RG8Sint,
+    RHIPixelFormat_R16Unorm,
+    RHIPixelFormat_R16Snorm,
+    RHIPixelFormat_R16Uint,
+    RHIPixelFormat_R16Sint,
+    RHIPixelFormat_R16Float,
+    RHIPixelFormat_RG8Unorm,
+    RHIPixelFormat_RG8Snorm,
+    RHIPixelFormat_RG8Uint,
+    RHIPixelFormat_RG8Sint,
     // Packed 16-Bit formats
-    PixelFormat_B5G6R5Unorm,
-    PixelFormat_BGR5A1Unorm,
-    PixelFormat_BGRA4Unorm,
+    RHIPixelFormat_B5G6R5Unorm,
+    RHIPixelFormat_BGR5A1Unorm,
+    RHIPixelFormat_BGRA4Unorm,
     // 32-bit formats
-    PixelFormat_R32Uint,
-    PixelFormat_R32Sint,
-    PixelFormat_R32Float,
-    PixelFormat_RG16Unorm,
-    PixelFormat_RG16Snorm,
-    PixelFormat_RG16Uint,
-    PixelFormat_RG16Sint,
-    PixelFormat_RG16Float,
-    PixelFormat_RGBA8Unorm,
-    PixelFormat_RGBA8UnormSrgb,
-    PixelFormat_RGBA8Snorm,
-    PixelFormat_RGBA8Uint,
-    PixelFormat_RGBA8Sint,
-    PixelFormat_BGRA8Unorm,
-    PixelFormat_BGRA8UnormSrgb,
+    RHIPixelFormat_R32Uint,
+    RHIPixelFormat_R32Sint,
+    RHIPixelFormat_R32Float,
+    RHIPixelFormat_RG16Unorm,
+    RHIPixelFormat_RG16Snorm,
+    RHIPixelFormat_RG16Uint,
+    RHIPixelFormat_RG16Sint,
+    RHIPixelFormat_RG16Float,
+    RHIPixelFormat_RGBA8Unorm,
+    RHIPixelFormat_RGBA8UnormSrgb,
+    RHIPixelFormat_RGBA8Snorm,
+    RHIPixelFormat_RGBA8Uint,
+    RHIPixelFormat_RGBA8Sint,
+    RHIPixelFormat_BGRA8Unorm,
+    RHIPixelFormat_BGRA8UnormSrgb,
     // Packed 32-Bit Pixel Formats
-    PixelFormat_RGB10A2Unorm,
-    PixelFormat_RGB10A2Uint,
-    PixelFormat_RG11B10Ufloat,
-    PixelFormat_RGB9E5Ufloat,
+    RHIPixelFormat_RGB10A2Unorm,
+    RHIPixelFormat_RGB10A2Uint,
+    RHIPixelFormat_RG11B10Ufloat,
+    RHIPixelFormat_RGB9E5Ufloat,
     // 64-bit formats
-    PixelFormat_RG32Uint,
-    PixelFormat_RG32Sint,
-    PixelFormat_RG32Float,
-    PixelFormat_RGBA16Unorm,
-    PixelFormat_RGBA16Snorm,
-    PixelFormat_RGBA16Uint,
-    PixelFormat_RGBA16Sint,
-    PixelFormat_RGBA16Float,
+    RHIPixelFormat_RG32Uint,
+    RHIPixelFormat_RG32Sint,
+    RHIPixelFormat_RG32Float,
+    RHIPixelFormat_RGBA16Unorm,
+    RHIPixelFormat_RGBA16Snorm,
+    RHIPixelFormat_RGBA16Uint,
+    RHIPixelFormat_RGBA16Sint,
+    RHIPixelFormat_RGBA16Float,
     // 128-bit formats
-    PixelFormat_RGBA32Uint,
-    PixelFormat_RGBA32Sint,
-    PixelFormat_RGBA32Float,
+    RHIPixelFormat_RGBA32Uint,
+    RHIPixelFormat_RGBA32Sint,
+    RHIPixelFormat_RGBA32Float,
     // Depth-stencil formats
-    PixelFormat_Depth16Unorm,
-    PixelFormat_Depth24UnormStencil8,
-    PixelFormat_Depth32Float,
-    PixelFormat_Depth32FloatStencil8,
+    RHIPixelFormat_Depth16Unorm,
+    RHIPixelFormat_Depth24UnormStencil8,
+    RHIPixelFormat_Depth32Float,
+    RHIPixelFormat_Depth32FloatStencil8,
     // BC compressed formats
-    PixelFormat_BC1RGBAUnorm,
-    PixelFormat_BC1RGBAUnormSrgb,
-    PixelFormat_BC2RGBAUnorm,
-    PixelFormat_BC2RGBAUnormSrgb,
-    PixelFormat_BC3RGBAUnorm,
-    PixelFormat_BC3RGBAUnormSrgb,
-    PixelFormat_BC4RUnorm,
-    PixelFormat_BC4RSnorm,
-    PixelFormat_BC5RGUnorm,
-    PixelFormat_BC5RGSnorm,
-    PixelFormat_BC6HRGBUfloat,
-    PixelFormat_BC6HRGBFloat,
-    PixelFormat_BC7RGBAUnorm,
-    PixelFormat_BC7RGBAUnormSrgb,
+    RHIPixelFormat_BC1RGBAUnorm,
+    RHIPixelFormat_BC1RGBAUnormSrgb,
+    RHIPixelFormat_BC2RGBAUnorm,
+    RHIPixelFormat_BC2RGBAUnormSrgb,
+    RHIPixelFormat_BC3RGBAUnorm,
+    RHIPixelFormat_BC3RGBAUnormSrgb,
+    RHIPixelFormat_BC4RUnorm,
+    RHIPixelFormat_BC4RSnorm,
+    RHIPixelFormat_BC5RGUnorm,
+    RHIPixelFormat_BC5RGSnorm,
+    RHIPixelFormat_BC6HRGBUfloat,
+    RHIPixelFormat_BC6HRGBFloat,
+    RHIPixelFormat_BC7RGBAUnorm,
+    RHIPixelFormat_BC7RGBAUnormSrgb,
     // ETC2/EAC compressed formats
-    PixelFormat_ETC2RGB8Unorm,
-    PixelFormat_ETC2RGB8UnormSrgb,
-    PixelFormat_ETC2RGB8A1Unorm,
-    PixelFormat_ETC2RGB8A1UnormSrgb,
-    PixelFormat_ETC2RGBA8Unorm,
-    PixelFormat_ETC2RGBA8UnormSrgb,
-    PixelFormat_EACR11Unorm,
-    PixelFormat_EACR11Snorm,
-    PixelFormat_EACRG11Unorm,
-    PixelFormat_EACRG11Snorm,
+    RHIPixelFormat_ETC2RGB8Unorm,
+    RHIPixelFormat_ETC2RGB8UnormSrgb,
+    RHIPixelFormat_ETC2RGB8A1Unorm,
+    RHIPixelFormat_ETC2RGB8A1UnormSrgb,
+    RHIPixelFormat_ETC2RGBA8Unorm,
+    RHIPixelFormat_ETC2RGBA8UnormSrgb,
+    RHIPixelFormat_EACR11Unorm,
+    RHIPixelFormat_EACR11Snorm,
+    RHIPixelFormat_EACRG11Unorm,
+    RHIPixelFormat_EACRG11Snorm,
     // ASTC compressed formats
-    PixelFormat_ASTC4x4Unorm,
-    PixelFormat_ASTC4x4UnormSrgb,
-    PixelFormat_ASTC5x4Unorm,
-    PixelFormat_ASTC5x4UnormSrgb,
-    PixelFormat_ASTC5x5Unorm,
-    PixelFormat_ASTC5x5UnormSrgb,
-    PixelFormat_ASTC6x5Unorm,
-    PixelFormat_ASTC6x5UnormSrgb,
-    PixelFormat_ASTC6x6Unorm,
-    PixelFormat_ASTC6x6UnormSrgb,
-    PixelFormat_ASTC8x5Unorm,
-    PixelFormat_ASTC8x5UnormSrgb,
-    PixelFormat_ASTC8x6Unorm,
-    PixelFormat_ASTC8x6UnormSrgb,
-    PixelFormat_ASTC8x8Unorm,
-    PixelFormat_ASTC8x8UnormSrgb,
-    PixelFormat_ASTC10x5Unorm,
-    PixelFormat_ASTC10x5UnormSrgb,
-    PixelFormat_ASTC10x6Unorm,
-    PixelFormat_ASTC10x6UnormSrgb,
-    PixelFormat_ASTC10x8Unorm,
-    PixelFormat_ASTC10x8UnormSrgb,
-    PixelFormat_ASTC10x10Unorm,
-    PixelFormat_ASTC10x10UnormSrgb,
-    PixelFormat_ASTC12x10Unorm,
-    PixelFormat_ASTC12x10UnormSrgb,
-    PixelFormat_ASTC12x12Unorm,
-    PixelFormat_ASTC12x12UnormSrgb,
+    RHIPixelFormat_ASTC4x4Unorm,
+    RHIPixelFormat_ASTC4x4UnormSrgb,
+    RHIPixelFormat_ASTC5x4Unorm,
+    RHIPixelFormat_ASTC5x4UnormSrgb,
+    RHIPixelFormat_ASTC5x5Unorm,
+    RHIPixelFormat_ASTC5x5UnormSrgb,
+    RHIPixelFormat_ASTC6x5Unorm,
+    RHIPixelFormat_ASTC6x5UnormSrgb,
+    RHIPixelFormat_ASTC6x6Unorm,
+    RHIPixelFormat_ASTC6x6UnormSrgb,
+    RHIPixelFormat_ASTC8x5Unorm,
+    RHIPixelFormat_ASTC8x5UnormSrgb,
+    RHIPixelFormat_ASTC8x6Unorm,
+    RHIPixelFormat_ASTC8x6UnormSrgb,
+    RHIPixelFormat_ASTC8x8Unorm,
+    RHIPixelFormat_ASTC8x8UnormSrgb,
+    RHIPixelFormat_ASTC10x5Unorm,
+    RHIPixelFormat_ASTC10x5UnormSrgb,
+    RHIPixelFormat_ASTC10x6Unorm,
+    RHIPixelFormat_ASTC10x6UnormSrgb,
+    RHIPixelFormat_ASTC10x8Unorm,
+    RHIPixelFormat_ASTC10x8UnormSrgb,
+    RHIPixelFormat_ASTC10x10Unorm,
+    RHIPixelFormat_ASTC10x10UnormSrgb,
+    RHIPixelFormat_ASTC12x10Unorm,
+    RHIPixelFormat_ASTC12x10UnormSrgb,
+    RHIPixelFormat_ASTC12x12Unorm,
+    RHIPixelFormat_ASTC12x12UnormSrgb,
     // ASTC HDR compressed formats
-    PixelFormat_ASTC4x4HDR,
-    PixelFormat_ASTC5x4HDR,
-    PixelFormat_ASTC5x5HDR,
-    PixelFormat_ASTC6x5HDR,
-    PixelFormat_ASTC6x6HDR,
-    PixelFormat_ASTC8x5HDR,
-    PixelFormat_ASTC8x6HDR,
-    PixelFormat_ASTC8x8HDR,
-    PixelFormat_ASTC10x5HDR,
-    PixelFormat_ASTC10x6HDR,
-    PixelFormat_ASTC10x8HDR,
-    PixelFormat_ASTC10x10HDR,
-    PixelFormat_ASTC12x10HDR,
-    PixelFormat_ASTC12x12HDR,
+    RHIPixelFormat_ASTC4x4HDR,
+    RHIPixelFormat_ASTC5x4HDR,
+    RHIPixelFormat_ASTC5x5HDR,
+    RHIPixelFormat_ASTC6x5HDR,
+    RHIPixelFormat_ASTC6x6HDR,
+    RHIPixelFormat_ASTC8x5HDR,
+    RHIPixelFormat_ASTC8x6HDR,
+    RHIPixelFormat_ASTC8x8HDR,
+    RHIPixelFormat_ASTC10x5HDR,
+    RHIPixelFormat_ASTC10x6HDR,
+    RHIPixelFormat_ASTC10x8HDR,
+    RHIPixelFormat_ASTC10x10HDR,
+    RHIPixelFormat_ASTC12x10HDR,
+    RHIPixelFormat_ASTC12x12HDR,
 
     // MultiAspect format
-    //PixelFormat_R8BG8Biplanar420Unorm,
-    //PixelFormat_R10X6BG10X6Biplanar420Unorm,
+    //RHIPixelFormat_R8BG8Biplanar420Unorm,
+    //RHIPixelFormat_R10X6BG10X6Biplanar420Unorm,
 
-    _PixelFormat_Count,
-    _PixelFormat_Force32 = 0x7FFFFFFF
-} PixelFormat;
+    _RHIPixelFormat_Count,
+    _RHIPixelFormat_Force32 = 0x7FFFFFFF
+} RHIPixelFormat;
 
-typedef enum GPUMemoryType {
+typedef enum RHIMemoryType {
     /// CPU no access, GPU read/write
-    GPUMemoryType_Private,
+    RHIMemoryType_Private,
     /// CPU write, GPU read
-    GPUMemoryType_Upload,
+    RHIMemoryType_Upload,
     /// CPU read, GPU write
-    GPUMemoryType_Readback,
+    RHIMemoryType_Readback,
 
-    GPUMemoryType_Count,
-    _GPUMemoryType_Force32 = 0x7FFFFFFF
-} GPUMemoryType;
+    _RHIMemoryType_Count,
+    _RHIMemoryType_Force32 = 0x7FFFFFFF
+} RHIMemoryType;
 
 typedef enum GPUTextureAspect {
     GPUTextureAspect_All = 0,
@@ -778,5 +771,11 @@ typedef struct RHIDrawIndirectCommand {
     uint32_t firstVertex;
     uint32_t firstInstance;
 } RHIDrawIndirectCommand;
+
+/* Function */
+typedef void (*RHILogCallback)(RHILogLevel level, const char* message, void* userData);
+ARHI_API RHILogLevel arhiGetLogLevel(void);
+ARHI_API void arhiSetLogLevel(RHILogLevel level);
+ARHI_API void arhiSetLogCallback(RHILogCallback func, void* userData);
 
 #endif /* ARHI_H_ */

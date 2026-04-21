@@ -153,7 +153,7 @@ private:
 struct GPUBuffer : public GPUResource
 {
     //GPUBufferDesc desc;
-    virtual GPUDeviceAddress GetDeviceAddress() const = 0;
+    GPUAddress address = 0;
 };
 
 struct GPUTexture : public GPUResource
@@ -305,8 +305,10 @@ struct GPUSurfaceHandle
     void* xDisplay = nullptr;
     uint64_t xWindow = 0;
 
+#if defined(_WIN32)
     // WindowsHwnd
     HWND hwnd = nullptr;
+#endif
 
     // IDCompositionVisual/SwapChainPanel
     IUnknown* idCompositionVisualOrSwapChainPanel = nullptr;
