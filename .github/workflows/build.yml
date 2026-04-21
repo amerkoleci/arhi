@@ -29,7 +29,7 @@ jobs:
       uses: microsoft/setup-msbuild@v3
       
     - name: Configure win-x64
-      run: cmake -S "." -B "build_win_64" -G "Visual Studio 18 2026" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="win-x64-sdk" -DARHI_BUILD_SAMPLES=OFF
+      run: cmake -S "." -B "build_win_64" -G Ninja -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="win-x64-sdk" -DARHI_BUILD_SAMPLES=OFF
     - name: Build win-x64
       run: cmake --build build_win_64 --target install --config Release
 
