@@ -15,4 +15,24 @@
 //#include <AppKit/AppKit.hpp>
 //#include <MetalKit/MetalKit.hpp>
 
+bool Metal_IsSupported(void)
+{
+    static bool available_initialized = false;
+    static bool available = false;
+
+    if (available_initialized) {
+        return available;
+    }
+
+    available_initialized = true;
+    available = false;
+    return available;
+}
+
+RHIFactoryImpl* Metal_CreateFactory(const RHIFactoryDesc* desc)
+{
+    ARHI_UNUSED(desc);
+    return nullptr;
+}
+
 #endif /* defined(ARHI_METAL) */

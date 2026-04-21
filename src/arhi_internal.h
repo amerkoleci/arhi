@@ -80,6 +80,14 @@
 #   define ARHI_ASSERT(...) ((void)0)
 #endif
 
+#define SAFE_RELEASE(obj) do \
+{ \
+  if ((obj)) { \
+    (obj)->Release(); \
+    (obj) = nullptr; \
+  } \
+} while(0)
+
 #if defined(_WIN32)
 // Use the C++ standard templated min/max
 #define NOMINMAX
@@ -92,6 +100,13 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #endif
+
+#define MAX_LOG_MESSAGE_SIZE        1024
+_ARHI_EXTERN void arhi_log(RHILogLevel level, const char* message);
+_ARHI_EXTERN void arhi_log_format(RHILogLevel level, const char* format, ...);
+_ARHI_EXTERN void arhi_log_info(const char* format, ...);
+_ARHI_EXTERN void arhi_log_warn(const char* format, ...);
+_ARHI_EXTERN void arhi_log_error(const char* format, ...);
 
 // Forward declaration for native handle
 struct IUnknown;
@@ -116,18 +131,18 @@ enum class TextureLayout : uint8_t
     ShadingRateSurface,
 };
 
-class GPUResource
+class RHIObject
 {
 protected:
-    GPUResource() = default;
-    virtual ~GPUResource() = default;
+    RHIObject() = default;
+    virtual ~RHIObject() = default;
 
 public:
     // Non-copyable and non-movable
-    GPUResource(const GPUResource&) = delete;
-    GPUResource& operator=(const GPUResource&) = delete;
-    GPUResource(GPUResource&&) = delete;
-    GPUResource& operator=(GPUResource&&) = delete;
+    RHIObject(const RHIObject&) = delete;
+    RHIObject& operator=(const RHIObject&) = delete;
+    RHIObject(RHIObject&&) = delete;
+    RHIObject& operator=(RHIObject&&) = delete;
 
     virtual uint32_t AddRef()
     {
@@ -150,53 +165,53 @@ private:
     std::atomic_uint32_t refCount = 1;
 };
 
-struct GPUBuffer : public GPUResource
+struct GPUBuffer : public RHIObject
 {
     //GPUBufferDesc desc;
     GPUAddress address = 0;
 };
 
-struct GPUTexture : public GPUResource
+struct GPUTexture : public RHIObject
 {
     //GPUTextureDesc desc;
 };
 
-struct GPUSampler : public GPUResource
+struct GPUSampler : public RHIObject
 {
 
 };
 
-struct GPUQueryHeap : public GPUResource
+struct GPUQueryHeap : public RHIObject
 {
 
 };
 
-struct GPUBindGroupLayoutImpl : public GPUResource
+struct GPUBindGroupLayoutImpl : public RHIObject
 {
 
 };
 
-struct GPUBindGroupImpl : public GPUResource
+struct GPUBindGroupImpl : public RHIObject
 {
 
 };
 
-struct GPUPipelineLayoutImpl : public GPUResource
+struct GPUPipelineLayoutImpl : public RHIObject
 {
 
 };
 
-struct GPUComputePipeline : public GPUResource
+struct GPUComputePipeline : public RHIObject
 {
 
 };
 
-struct GPURenderPipelineImpl : public GPUResource
+struct GPURenderPipelineImpl : public RHIObject
 {
 
 };
 
-struct GPUCommandEncoder : public GPUResource
+struct GPUCommandEncoder : public RHIObject
 {
     virtual void EndEncoding() = 0;
     virtual void PushDebugGroup(const char* groupLabel) const = 0;
@@ -223,8 +238,8 @@ struct GPURenderPassEncoder : public GPUCommandEncoder
     //virtual void SetStencilReference(uint32_t reference) = 0;
 
     virtual void SetVertexBuffer(uint32_t slot, GPUBuffer* buffer, uint64_t offset) = 0;
-    virtual void SetIndexBuffer(GPUBuffer* buffer, GPUIndexType type, uint64_t offset) = 0;
-    virtual void SetPipeline(GPURenderPipeline pipeline) = 0;
+    virtual void SetIndexBuffer(GPUBuffer* buffer, RHIIndexType type, uint64_t offset) = 0;
+    //virtual void SetPipeline(GPURenderPipeline pipeline) = 0;
     virtual void SetPushConstants(uint32_t pushConstantIndex, const void* data, uint32_t size) = 0;
 
     virtual void Draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) = 0;
@@ -238,30 +253,30 @@ struct GPURenderPassEncoder : public GPUCommandEncoder
     virtual void SetShadingRate(GPUShadingRate rate) = 0;
 };
 
-struct GPUCommandBuffer : public GPUResource
+struct GPUCommandBuffer : public RHIObject
 {
     virtual void PushDebugGroup(const char* groupLabel) const = 0;
     virtual void PopDebugGroup() const = 0;
     virtual void InsertDebugMarker(const char* markerLabel) const = 0;
 
-    virtual GPUAcquireSurfaceResult AcquireSurfaceTexture(GPUSurface* surface, GPUTexture** surfaceTexture) = 0;
+    //virtual GPUAcquireSurfaceResult AcquireSurfaceTexture(GPUSurface* surface, GPUTexture** surfaceTexture) = 0;
     //virtual GPUComputePassEncoder* BeginComputePass(const GPUComputePassDesc& desc) = 0;
     //virtual GPURenderPassEncoder* BeginRenderPass(const GPURenderPassDesc& desc) = 0;
 };
 
-struct GPUCommandQueue : public GPUResource
+struct GPUCommandQueue : public RHIObject
 {
-    virtual GPUCommandQueueType GetType() const = 0;
+    virtual RHIQueueType GetType() const = 0;
 
     virtual void WaitIdle() = 0;
     ///virtual GPUCommandBuffer* AcquireCommandBuffer(const GPUCommandBufferDesc* desc) = 0;
     virtual void Submit(uint32_t numCommandBuffers, GPUCommandBuffer** commandBuffers) = 0;
 };
 
-struct GPUDevice : public GPUResource
+struct GPUDevice : public RHIObject
 {
-    virtual bool HasFeature(GPUFeature feature) const = 0;
-    virtual GPUCommandQueue* GetQueue(GPUCommandQueueType type) = 0;
+    virtual bool HasFeature(RHIFeature feature) const = 0;
+    virtual GPUCommandQueue* GetQueue(RHIQueueType type) = 0;
     virtual void WaitIdle() = 0;
     virtual uint64_t CommitFrame() = 0;
 
@@ -278,25 +293,27 @@ struct GPUDevice : public GPUResource
     //virtual GPUQueryHeap* CreateQueryHeap(const GPUQueryHeapDesc& desc) = 0;
 };
 
-struct GPUSurfaceHandle
+enum class RHISurfaceSourceType : uint8_t
 {
-    enum class Type
-    {
-        Invalid,
-        AndroidWindow,
-        MetalLayer,
-        WindowsHWND,
-        IDCompositionVisual,
-        SwapChainPanel,
-        SurfaceHandle,
-        WaylandSurface,
-        XlibWindow,
-    } type = Type::Invalid;
+    Invalid,
+    AndroidWindow,
+    MetalLayer,
+    WindowsHWND,
+    IDCompositionVisual,
+    SwapChainPanel,
+    SurfaceHandle,
+    WaylandSurface,
+    XlibWindow,
+};
+
+struct RHISurfaceSourceImpl
+{
+    RHISurfaceSourceType type = RHISurfaceSourceType::Invalid;
 
     // MetalLayer
     void* metalLayer = nullptr;
     // ANativeWindow
-    ANativeWindow* androidNativeWindow = nullptr;
+    ANativeWindow* androidWindow = nullptr;
 
     // Wayland
     wl_display* waylandDisplay = nullptr;
@@ -311,12 +328,12 @@ struct GPUSurfaceHandle
 #endif
 
     // IDCompositionVisual/SwapChainPanel
-    IUnknown* idCompositionVisualOrSwapChainPanel = nullptr;
+    //IUnknown* idCompositionVisualOrSwapChainPanel = nullptr;
     // SurfaceHandle
-    void* surfaceHandle = nullptr;
+    //void* surfaceHandle = nullptr;
 };
 
-struct GPUSurface : public GPUResource
+struct RHISurfaceImpl : public RHIObject
 {
     //virtual void GetCapabilities(GPUAdapter* adapter, GPUSurfaceCapabilities* capabilities) const = 0;
     //virtual bool Configure(const GPUSurfaceConfig* config_) = 0;
@@ -325,24 +342,24 @@ struct GPUSurface : public GPUResource
     //GPUSurfaceConfig config;
 };
 
-struct GPUAdapter : public GPUResource
+struct RHIAdapterImpl : public RHIObject
 {
-    virtual GPUAdapterType GetType() const = 0;
-    //virtual void GetInfo(GPUAdapterInfo* info) const = 0;
+    virtual RHIAdapterType GetType() const = 0;
+    virtual void GetInfo(RHIAdapterInfo* info) const = 0;
     //virtual void GetLimits(GPUAdapterLimits* limits) const = 0;
     //virtual bool HasFeature(GPUFeature feature) const = 0;
     //virtual GPUDevice* CreateDevice(const GPUDeviceDesc& desc) = 0;
 };
 
-struct GPUFactory : public GPUResource
+struct RHIFactoryImpl : public RHIObject
 {
 public:
-    virtual ~GPUFactory() = default;
+    virtual ~RHIFactoryImpl() = default;
 
-    virtual GPUBackendType GetBackend() const = 0;
+    virtual RHIBackend GetBackend() const = 0;
     virtual uint32_t GetAdapterCount() const = 0;
-    virtual GPUAdapter* GetAdapter(uint32_t index) const = 0;
-    virtual GPUSurface* CreateSurface(GPUSurfaceHandle* surfaceHandle) = 0;
+    virtual RHIAdapter GetAdapter(uint32_t index) const = 0;
+    virtual RHISurface CreateSurface(RHISurfaceSource source) = 0;
 };
 
 namespace
@@ -386,6 +403,30 @@ namespace
         v |= v >> 32;
         v++;
         return v;
+    }
+
+    namespace string
+    {
+        inline void copy_safe(char* dst, size_t dstSize, const char* src)
+        {
+            if (!dst || !src || dstSize == 0)
+            {
+                return;
+            }
+
+            // Copy characters from src to dst until either (dstSize - 1) is exhausted or we hit a null terminator in src.
+            while (dstSize > 1 && *src)
+            {
+                *dst++ = *src++;
+                --dstSize;
+            }
+            // Fill the rest of dst with null characters to ensure null-termination.
+            while (dstSize > 0)
+            {
+                *dst++ = 0;
+                --dstSize;
+            }
+        }
     }
 
     constexpr uint32_t CalculateSubresource(uint32_t mipLevel, uint32_t arrayLayer, uint32_t mipLevelCount) noexcept
@@ -443,15 +484,15 @@ namespace
 
 #if defined(ARHI_VULKAN)
 _ARHI_EXTERN bool Vulkan_IsSupported(void);
-_ARHI_EXTERN GPUFactory* Vulkan_CreateInstance(const RHIFactoryDesc* desc);
+_ARHI_EXTERN RHIFactoryImpl* Vulkan_CreateFactory(const RHIFactoryDesc* desc);
 #endif
 
 #if defined(ARHI_D3D12)
 _ARHI_EXTERN bool D3D12_IsSupported(void);
-_ARHI_EXTERN GPUFactory* D3D12_CreateInstance(const RHIFactoryDesc* desc);
+_ARHI_EXTERN RHIFactoryImpl* D3D12_CreateFactory(const RHIFactoryDesc* desc);
 #endif
 
 #if defined(ARHI_METAL)
 _ARHI_EXTERN bool Metal_IsSupported(void);
-_ARHI_EXTERN GPUFactory* Metal_CreateInstance(const RHIFactoryDesc* desc);
+_ARHI_EXTERN RHIFactoryImpl* Metal_CreateFactory(const RHIFactoryDesc* desc);
 #endif

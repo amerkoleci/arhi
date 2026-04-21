@@ -307,6 +307,8 @@ endif()
 if (ARHI_D3D12)
     target_sources(${TARGET_NAME} PRIVATE
         src/d3d12/arhi_d3d12.cpp
+        src/d3d12/D3D12MemAlloc.cpp
+        src/d3d12/D3D12MemAlloc.h
     )
     target_link_libraries(${TARGET_NAME} PRIVATE DirectX-Headers)
     target_compile_definitions (${TARGET_NAME} PRIVATE ARHI_D3D12)
@@ -327,7 +329,7 @@ if (ARHI_METAL)
 endif()
 
 # Add samples subdirectoy
-#add_subdirectory(samples)
+add_subdirectory(samples)
 
 # README and LICENSE
 if(ARHI_INSTALL)

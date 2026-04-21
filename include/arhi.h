@@ -43,29 +43,24 @@ typedef uint32_t Flags;
 typedef uint32_t Bool32;
 
 /* Forward declarations */
-typedef struct GPUFactory                   GPUFactory;
-typedef struct GPUAdapter                   GPUAdapter;
-typedef struct GPUSurfaceHandle             GPUSurfaceHandle;
-typedef struct GPUSurface                   GPUSurface;
-typedef struct GPUDevice                    GPUDevice;
-typedef struct GPUCommandQueue              GPUCommandQueue;
-typedef struct GPUCommandBuffer             GPUCommandBuffer;
-typedef struct GPUComputePassEncoder        GPUComputePassEncoder;
-typedef struct GPURenderPassEncoder         GPURenderPassEncoder;
-typedef struct GPUBuffer                    GPUBuffer;
-typedef struct GPUTexture                   GPUTexture;
-typedef struct GPUComputePipeline           GPUComputePipeline;
-typedef struct GPURenderPipelineImpl*       GPURenderPipeline;
+typedef struct RHIFactoryImpl*              RHIFactory;
+typedef struct RHIAdapterImpl*              RHIAdapter;
+typedef struct RHISurfaceSourceImpl*        RHISurfaceSource;
+typedef struct RHISurfaceImpl*              RHISurface;
 
 /* Types */
 typedef uint64_t GPUAddress;
 
 /* Constants */
-#define GPU_MAX_ADAPTER_NAME_SIZE  (256u)
-#define GPU_MAX_COLOR_ATTACHMENTS (8u)
-#define GPU_MAX_VERTEX_BUFFER_BINDINGS (8u)
-#define GPU_WHOLE_SIZE (UINT64_MAX)
-#define GPU_LOD_CLAMP_NONE (1000.0F)
+#define ARHI_VERSION_MAJOR  1
+#define ARHI_VERSION_MINOR	0
+#define ARHI_VERSION_PATCH	0
+
+#define RHI_MAX_ADAPTER_NAME_SIZE  (256u)
+#define RHI_MAX_COLOR_ATTACHMENTS (8u)
+#define RHI_MAX_VERTEX_BUFFER_BINDINGS (8u)
+#define RHI_WHOLE_SIZE (UINT64_MAX)
+#define RHI_LOD_CLAMP_NONE (1000.0F)
 
 /* Enums */
 typedef enum RHILogLevel {
@@ -241,86 +236,82 @@ typedef enum GPUTextureAspect {
     _GPUTextureAspect_Force32 = 0x7FFFFFFF
 } GPUTextureAspect;
 
-typedef enum GPUBackendType {
-    GPUBackendType_Undefined = 0,
-    GPUBackendType_Null,
-    GPUBackendType_Vulkan,
-    GPUBackendType_D3D12,
-    GPUBackendType_Metal,
-    GPUBackendType_WebGPU,
+typedef enum RHIBackend {
+    _RHIBackend_Default = 0,
+    RHIBackend_Vulkan,
+    RHIBackend_D3D12,
+    RHIBackend_Metal,
 
-    _GPUBackendType_Count,
-    _GPUBackendType_Force32 = 0x7FFFFFFF
-} GPUBackendType;
+    _RHIBackend_Count,
+    _RHIBackend_Force32 = 0x7FFFFFFF
+} RHIBackend;
 
-typedef enum GPUValidationMode {
-    GPUValidationMode_Disabled = 0,
-    GPUValidationMode_Enabled,
-    GPUValidationMode_Verbose,
-    GPUValidationMode_GPU,
+typedef enum RHIValidationMode {
+    RHIValidationMode_Disabled = 0,
+    RHIValidationMode_Enabled,
+    RHIValidationMode_Verbose,
+    RHIValidationMode_Gpu,
 
-    _GPUValidationMode_Count,
-    _GPUValidationMode_Force32 = 0x7FFFFFFF
-} GPUValidationMode;
+    _RHIValidationMode_Count,
+    _RHIValidationMode_Force32 = 0x7FFFFFFF
+} RHIValidationMode;
 
-typedef enum GPUCommandQueueType {
-    GPUCommandQueueType_Graphics = 0,
-    GPUCommandQueueType_Compute,
-    GPUCommandQueueType_Copy,
-    //GPUCommandQueueType_VideoDecode,
-    //GPUCommandQueueType_VideoEncode,
+typedef enum RHIQueueType {
+    RHIQueueType_Graphics = 0,
+    RHIQueueType_Compute,
+    RHIQueueType_Copy,
 
-    _GPUCommandQueueType_Count,
-    _GPUCommandQueueType_Force32 = 0x7FFFFFFF
-} GPUCommandQueueType;
+    _RHIQueueType_Count,
+    _RHIQueueType_Force32 = 0x7FFFFFFF
+} RHIQueueType;
 
-typedef enum GPUVertexFormat {
-    GPUVertexFormat_Undefined = 0,
-    GPUVertexFormat_UByte,
-    GPUVertexFormat_UByte2,
-    GPUVertexFormat_UByte4,
-    GPUVertexFormat_Byte,
-    GPUVertexFormat_Byte2,
-    GPUVertexFormat_Byte4,
-    GPUVertexFormat_UByteNormalized,
-    GPUVertexFormat_UByte2Normalized,
-    GPUVertexFormat_UByte4Normalized,
-    GPUVertexFormat_ByteNormalized,
-    GPUVertexFormat_Byte2Normalized,
-    GPUVertexFormat_Byte4Normalized,
-    GPUVertexFormat_UShort,
-    GPUVertexFormat_UShort2,
-    GPUVertexFormat_UShort4,
-    GPUVertexFormat_Short,
-    GPUVertexFormat_Short2,
-    GPUVertexFormat_Short4,
-    GPUVertexFormat_UShortNormalized,
-    GPUVertexFormat_UShort2Normalized,
-    GPUVertexFormat_UShort4Normalized,
-    GPUVertexFormat_ShortNormalized,
-    GPUVertexFormat_Short2Normalized,
-    GPUVertexFormat_Short4Normalized,
-    GPUVertexFormat_Half,
-    GPUVertexFormat_Half2,
-    GPUVertexFormat_Half4,
-    GPUVertexFormat_Float,
-    GPUVertexFormat_Float2,
-    GPUVertexFormat_Float3,
-    GPUVertexFormat_Float4,
-    GPUVertexFormat_UInt,
-    GPUVertexFormat_UInt2,
-    GPUVertexFormat_UInt3,
-    GPUVertexFormat_UInt4,
-    GPUVertexFormat_Int,
-    GPUVertexFormat_Int2,
-    GPUVertexFormat_Int3,
-    GPUVertexFormat_Int4,
-    GPUVertexFormat_Unorm10_10_10_2,
-    GPUVertexFormat_Unorm8x4BGRA,
+typedef enum RHIVertexFormat {
+    RHIVertexFormat_Undefined = 0,
+    RHIVertexFormat_UByte,
+    RHIVertexFormat_UByte2,
+    RHIVertexFormat_UByte4,
+    RHIVertexFormat_Byte,
+    RHIVertexFormat_Byte2,
+    RHIVertexFormat_Byte4,
+    RHIVertexFormat_UByteNormalized,
+    RHIVertexFormat_UByte2Normalized,
+    RHIVertexFormat_UByte4Normalized,
+    RHIVertexFormat_ByteNormalized,
+    RHIVertexFormat_Byte2Normalized,
+    RHIVertexFormat_Byte4Normalized,
+    RHIVertexFormat_UShort,
+    RHIVertexFormat_UShort2,
+    RHIVertexFormat_UShort4,
+    RHIVertexFormat_Short,
+    RHIVertexFormat_Short2,
+    RHIVertexFormat_Short4,
+    RHIVertexFormat_UShortNormalized,
+    RHIVertexFormat_UShort2Normalized,
+    RHIVertexFormat_UShort4Normalized,
+    RHIVertexFormat_ShortNormalized,
+    RHIVertexFormat_Short2Normalized,
+    RHIVertexFormat_Short4Normalized,
+    RHIVertexFormat_Half,
+    RHIVertexFormat_Half2,
+    RHIVertexFormat_Half4,
+    RHIVertexFormat_Float,
+    RHIVertexFormat_Float2,
+    RHIVertexFormat_Float3,
+    RHIVertexFormat_Float4,
+    RHIVertexFormat_UInt,
+    RHIVertexFormat_UInt2,
+    RHIVertexFormat_UInt3,
+    RHIVertexFormat_UInt4,
+    RHIVertexFormat_Int,
+    RHIVertexFormat_Int2,
+    RHIVertexFormat_Int3,
+    RHIVertexFormat_Int4,
+    RHIVertexFormat_Unorm10_10_10_2,
+    RHIVertexFormat_Unorm8x4BGRA,
 
-    _GPUVertexFormat_Count,
-    _GPUVertexFormat_Force32 = 0x7FFFFFFF
-} GPUVertexFormat;
+    _RHIVertexFormat_Count,
+    _RHIVertexFormat_Force32 = 0x7FFFFFFF
+} RHIVertexFormat;
 
 typedef enum GPUTextureDimension {
     /// Undefined - default to 2D texture.
@@ -337,81 +328,79 @@ typedef enum GPUTextureDimension {
     _GPUTextureDimension_Force32 = 0x7FFFFFFF
 } GPUTextureDimension;
 
-typedef enum GPUIndexType {
-    GPUIndexType_Uint16 = 0,
-    GPUIndexType_Uint32 = 1,
+typedef enum RHIIndexType {
+    RHIIndexType_Uint16 = 0,
+    RHIIndexType_Uint32 = 1,
 
-    _GPUIndexType_Count,
-    _GPUIndexType_Force32 = 0x7FFFFFFF
-} GPUIndexType;
+    _RHIIndexType_Count,
+    _RHIIndexType_Force32 = 0x7FFFFFFF
+} RHIIndexType;
 
-typedef enum GPUCompareFunction {
-    GPUCompareFunction_Undefined = 0,
-    GPUCompareFunction_Never,
-    GPUCompareFunction_Less,
-    GPUCompareFunction_Equal,
-    GPUCompareFunction_LessEqual,
-    GPUCompareFunction_Greater,
-    GPUCompareFunction_NotEqual,
-    GPUCompareFunction_GreaterEqual,
-    GPUCompareFunction_Always,
+typedef enum RHICompareFunction {
+    RHICompareFunction_Undefined = 0,
+    RHICompareFunction_Never,
+    RHICompareFunction_Less,
+    RHICompareFunction_Equal,
+    RHICompareFunction_LessEqual,
+    RHICompareFunction_Greater,
+    RHICompareFunction_NotEqual,
+    RHICompareFunction_GreaterEqual,
+    RHICompareFunction_Always,
 
-    _GPUCompareFunction_Count,
-    _GPUCompareFunction_Force32 = 0x7FFFFFFF
-} GPUCompareFunction;
+    _RHICompareFunction_Count,
+    _RHICompareFunction_Force32 = 0x7FFFFFFF
+} RHICompareFunction;
 
-typedef enum GPUBlendFactor {
-    GPUBlendFactor_Undefined = 0,
-    GPUBlendFactor_Zero,
-    GPUBlendFactor_One,
-    GPUBlendFactor_SourceColor,
-    GPUBlendFactor_OneMinusSourceColor,
-    GPUBlendFactor_SourceAlpha,
-    GPUBlendFactor_OneMinusSourceAlpha,
-    GPUBlendFactor_DestinationColor,
-    GPUBlendFactor_OneMinusDestinationColor,
-    GPUBlendFactor_DestinationAlpha,
-    GPUBlendFactor_OneMinusDestinationAlpha,
-    GPUBlendFactor_SourceAlphaSaturated,
-    GPUBlendFactor_BlendColor,
-    GPUBlendFactor_OneMinusBlendColor,
-    GPUBlendFactor_BlendAlpha,
-    GPUBlendFactor_OneMinusBlendAlpha,
-    GPUBlendFactor_Source1Color,
-    GPUBlendFactor_OneMinusSource1Color,
-    GPUBlendFactor_Source1Alpha,
-    GPUBlendFactor_OneMinusSource1Alpha,
+typedef enum RHIBlendFactor {
+    RHIBlendFactor_Zero,
+    RHIBlendFactor_One,
+    RHIBlendFactor_SourceColor,
+    RHIBlendFactor_OneMinusSourceColor,
+    RHIBlendFactor_SourceAlpha,
+    RHIBlendFactor_OneMinusSourceAlpha,
+    RHIBlendFactor_DestinationColor,
+    RHIBlendFactor_OneMinusDestinationColor,
+    RHIBlendFactor_DestinationAlpha,
+    RHIBlendFactor_OneMinusDestinationAlpha,
+    RHIBlendFactor_SourceAlphaSaturated,
+    RHIBlendFactor_BlendColor,
+    RHIBlendFactor_OneMinusBlendColor,
+    RHIBlendFactor_BlendAlpha,
+    RHIBlendFactor_OneMinusBlendAlpha,
+    RHIBlendFactor_Source1Color,
+    RHIBlendFactor_OneMinusSource1Color,
+    RHIBlendFactor_Source1Alpha,
+    RHIBlendFactor_OneMinusSource1Alpha,
 
-    _GPUBlendFactor_Count,
-    _GPUBlendFactor_Force32 = 0x7FFFFFFF
-} GPUBlendFactor;
+    _RHIBlendFactor_Count,
+    _RHIBlendFactor_Force32 = 0x7FFFFFFF
+} RHIBlendFactor;
 
-typedef enum GPUBlendOperation {
-    GPUBlendOperation_Undefined = 0,
-    GPUBlendOperation_Add,
-    GPUBlendOperation_Subtract,
-    GPUBlendOperation_ReverseSubtract,
-    GPUBlendOperation_Min,
-    GPUBlendOperation_Max,
+typedef enum RHIBlendOperation {
+    RHIBlendOperation_Add,
+    RHIBlendOperation_Subtract,
+    RHIBlendOperation_ReverseSubtract,
+    RHIBlendOperation_Min,
+    RHIBlendOperation_Max,
 
-    _GPUBlendOperation_Count,
-    _GPUBlendOperation_Force32 = 0x7FFFFFFF
-} GPUBlendOperation;
+    _RHIBlendOperation_Count,
+    _RHIBlendOperation_Force32 = 0x7FFFFFFF
+} RHIBlendOperation;
 
-typedef enum GPUStencilOperation {
-    GPUStencilOperation_Undefined = 0,
-    GPUStencilOperation_Keep,
-    GPUStencilOperation_Zero,
-    GPUStencilOperation_Replace,
-    GPUStencilOperation_IncrementClamp,
-    GPUStencilOperation_DecrementClamp,
-    GPUStencilOperation_Invert,
-    GPUStencilOperation_IncrementWrap,
-    GPUStencilOperation_DecrementWrap,
+typedef enum RHIStencilOperation {
+    RHIStencilOperation_Undefined = 0,
+    RHIStencilOperation_Keep,
+    RHIStencilOperation_Zero,
+    RHIStencilOperation_Replace,
+    RHIStencilOperation_IncrementClamp,
+    RHIStencilOperation_DecrementClamp,
+    RHIStencilOperation_Invert,
+    RHIStencilOperation_IncrementWrap,
+    RHIStencilOperation_DecrementWrap,
 
-    _GPUStencilOperation_Count,
-    _GPUStencilOperation_Force32 = 0x7FFFFFFF
-} GPUStencilOperation;
+    _RHIStencilOperation_Count,
+    _RHIStencilOperation_Force32 = 0x7FFFFFFF
+} RHIStencilOperation;
 
 typedef enum GPULoadAction {
     GPULoadAction_Undefined = 0,
@@ -443,59 +432,54 @@ typedef enum GPUPresentMode {
     _GPUPresentMode_Force32 = 0x7FFFFFFF
 } GPUPresentMode;
 
-typedef enum GPUShaderStage {
-    GPUShaderStage_Undefined,
-    GPUShaderStage_Vertex,
-    GPUShaderStage_Hull,
-    GPUShaderStage_Domain,
-    GPUShaderStage_Fragment,
-    GPUShaderStage_Compute,
-    GPUShaderStage_Amplification,
-    GPUShaderStage_Mesh,
+typedef enum RHIShaderStage {
+    RHIShaderStage_Undefined,
+    RHIShaderStage_Vertex,
+    RHIShaderStage_Fragment,
+    RHIShaderStage_Compute,
+    RHIShaderStage_Mesh,
+    RHIShaderStage_Amplification,
 
-    _GPUShaderStage_Count,
-    _GPUShaderStage_Force32 = 0x7FFFFFFF
-} GPUShaderStage;
+    _RHIShaderStage_Count,
+    _RHIShaderStage_Force32 = 0x7FFFFFFF
+} RHIShaderStage;
 
-typedef enum GPUVertexStepMode {
-    GPUVertexStepMode_Vertex = 0,
-    GPUVertexStepMode_Instance = 1,
+typedef enum RHIVertexStepMode {
+    RHIVertexStepMode_Vertex = 0,
+    RHIVertexStepMode_Instance = 1,
 
-    _GPUVertexStepMode_Force32 = 0x7FFFFFFF
-} GPUVertexStepMode;
+    _RHIVertexStepMode_Force32 = 0x7FFFFFFF
+} RHIVertexStepMode;
 
-typedef enum GPUFillMode {
-    _GPUFillMode_Default = 0,
-    GPUFillMode_Solid,
-    GPUFillMode_Wireframe,
+typedef enum RHIFillMode {
+    RHIFillMode_Solid,
+    RHIFillMode_Wireframe,
 
-    _GPUFillMode_Force32 = 0x7FFFFFFF
-} GPUFillMode;
+    _RHIFillMode_Force32 = 0x7FFFFFFF
+} RHIFillMode;
 
-typedef enum GPUCullMode {
-    _GPUCullMode_Default = 0,
-    GPUCullMode_None,
-    GPUCullMode_Front,
-    GPUCullMode_Back,
+typedef enum RHICullMode {
+    _RHICullMode_Default = 0,
+    RHICullMode_None,
+    RHICullMode_Front,
+    RHICullMode_Back,
 
-    _GPUCullMode_Force32 = 0x7FFFFFFF
-} GPUCullMode;
+    _RHICullMode_Force32 = 0x7FFFFFFF
+} RHICullMode;
 
-typedef enum GPUFrontFace {
-    _GPUFrontFace_Default = 0,
-    GPUFrontFace_Clockwise,
-    GPUFrontFace_CounterClockwise,
+typedef enum RHIFrontFace {
+    RHIFrontFace_CounterClockwise,
+    RHIFrontFace_Clockwise,
 
-    _GPUFrontFace_Force32 = 0x7FFFFFFF
-} GPUFrontFace;
+    _RHIFrontFace_Force32 = 0x7FFFFFFF
+} RHIFrontFace;
 
-typedef enum GPUDepthClipMode {
-    _GPUDepthClipMode_Default = 0,
-    GPUDepthClipMode_Clip,
-    GPUDepthClipMode_Clamp,
+typedef enum RHIDepthClipMode {
+    RHIDepthClipMode_Clip,
+    RHIDepthClipMode_Clamp,
 
-    _GPUDepthClipMode_Force32 = 0x7FFFFFFF
-} GPUDepthClipMode;
+    _RHIDepthClipMode_Force32 = 0x7FFFFFFF
+} RHIDepthClipMode;
 
 typedef enum GPUSamplerMinMagFilter {
     GPUSamplerMinMagFilter_Nearest = 0,
@@ -564,53 +548,53 @@ typedef enum GPUAcquireSurfaceResult {
     _GPUAcquireSurfaceResult_Force32 = 0x7FFFFFFF
 } GPUAcquireSurfaceResult;
 
-typedef enum GPUAdapterVendor {
+typedef enum RHIAdapterVendor {
     /// Adapter vendor is unknown
-    GPUAdapterVendor_Unknown = 0,
+    RHIAdapterVendor_Unknown = 0,
 
     /// Adapter vendor is NVIDIA
-    GPUAdapterVendor_NVIDIA,
+    RHIAdapterVendor_NVIDIA,
 
     /// Adapter vendor is AMD
-    GPUAdapterVendor_AMD,
+    RHIAdapterVendor_AMD,
 
     /// Adapter vendor is Intel
-    GPUAdapterVendor_Intel,
+    RHIAdapterVendor_Intel,
 
     /// Adapter vendor is ARM
-    GPUAdapterVendor_ARM,
+    RHIAdapterVendor_ARM,
 
     /// Adapter vendor is Qualcomm
-    GPUAdapterVendor_Qualcomm,
+    RHIAdapterVendor_Qualcomm,
 
     /// Adapter vendor is Imagination Technologies
-    GPUAdapterVendor_ImgTech,
+    RHIAdapterVendor_ImgTech,
 
     /// Adapter vendor is Microsoft (software rasterizer)
-    GPUAdapterVendor_MSFT,
+    RHIAdapterVendor_MSFT,
 
     /// Adapter vendor is Apple
-    GPUAdapterVendor_Apple,
+    RHIAdapterVendor_Apple,
 
     /// Adapter vendor is Mesa (software rasterizer)
-    GPUAdapterVendor_Mesa,
+    RHIAdapterVendor_Mesa,
 
     /// Adapter vendor is Broadcom (Raspberry Pi)
-    GPUAdapterVendor_Broadcom,
+    RHIAdapterVendor_Broadcom,
 
-    _GPUAdapterVendor_Count,
-    _GPUAdapterVendor_Force32 = 0x7FFFFFFF
-} GPUAdapterVendor;
+    _RHIAdapterVendor_Count,
+    _RHIAdapterVendor_Force32 = 0x7FFFFFFF
+} RHIAdapterVendor;
 
-typedef enum GPUAdapterType {
-    GPUAdapterType_DiscreteGpu,
-    GPUAdapterType_IntegratedGpu,
-    GPUAdapterType_VirtualGpu,
-    GPUAdapterType_Cpu,
-    GPUAdapterType_Other,
+typedef enum RHIAdapterType {
+    RHIAdapterType_DiscreteGpu,
+    RHIAdapterType_IntegratedGpu,
+    RHIAdapterType_VirtualGpu,
+    RHIAdapterType_Cpu,
+    RHIAdapterType_Other,
 
-    _GPUAdapterType_Force32 = 0x7FFFFFFF
-} GPUAdapterType;
+    _RHIAdapterType_Force32 = 0x7FFFFFFF
+} RHIAdapterType;
 
 typedef enum GPUShaderModel {
     GPUShaderModel_6_0,
@@ -628,14 +612,14 @@ typedef enum GPUShaderModel {
     _GPUShaderModel_Force32 = 0x7FFFFFFF
 } GPUShaderModel;
 
-typedef enum GPUConservativeRasterizationTier {
-    GPUConservativeRasterizationTier_NotSupported = 0,
-    GPUConservativeRasterizationTier_1 = 1,
-    GPUConservativeRasterizationTier_2 = 2,
-    GPUConservativeRasterizationTier_3 = 3,
+typedef enum RHIConservativeRasterizationTier {
+    RHIConservativeRasterizationTier_NotSupported = 0,
+    RHIConservativeRasterizationTier_1 = 1,
+    RHIConservativeRasterizationTier_2 = 2,
+    RHIConservativeRasterizationTier_3 = 3,
 
-    _GPUConservativeRasterizationTier_Force32 = 0x7FFFFFFF
-} GPUConservativeRasterizationTier;
+    _RHIConservativeRasterizationTier_Force32 = 0x7FFFFFFF
+} RHIConservativeRasterizationTier;
 
 typedef enum GPUVariableRateShadingTier {
     GPUVariableRateShadingTier_NotSupported = 0,
@@ -660,66 +644,66 @@ typedef enum GPUMeshShaderTier {
     _GPUMeshShaderTier_Force32 = 0x7FFFFFFF
 } GPUMeshShaderTier;
 
-typedef enum GPUFeature {
-    GPUFeature_TimestampQuery,
-    GPUFeature_PipelineStatisticsQuery,
-    GPUFeature_TextureCompressionBC,
-    GPUFeature_TextureCompressionETC2,
-    GPUFeature_TextureCompressionASTC,
-    GPUFeature_TextureCompressionASTC_HDR,
-    GPUFeature_IndirectFirstInstance,
-    GPUFeature_DualSourceBlending,
-    GPUFeature_ShaderFloat16,
-    GPUFeature_MultiDrawIndirect,
+typedef enum RHIFeature {
+    RHIFeature_TimestampQuery,
+    RHIFeature_PipelineStatisticsQuery,
+    RHIFeature_TextureCompressionBC,
+    RHIFeature_TextureCompressionETC2,
+    RHIFeature_TextureCompressionASTC,
+    RHIFeature_TextureCompressionASTC_HDR,
+    RHIFeature_IndirectFirstInstance,
+    RHIFeature_DualSourceBlending,
+    RHIFeature_ShaderFloat16,
+    RHIFeature_MultiDrawIndirect,
 
-    GPUFeature_SamplerMirrorClampToEdge,
-    GPUFeature_SamplerClampToBorder,
-    GPUFeature_SamplerMinMax,
+    RHIFeature_SamplerMirrorClampToEdge,
+    RHIFeature_SamplerClampToBorder,
+    RHIFeature_SamplerMinMax,
 
-    GPUFeature_Tessellation,
-    GPUFeature_DepthBoundsTest,
-    GPUFeature_GPUUploadHeapSupported,
-    GPUFeature_CopyQueueTimestampQuery,
-    GPUFeature_CacheCoherentUMA,
-    GPUFeature_ShaderOutputViewportIndex,
-    GPUFeature_Predication,
+    RHIFeature_Tessellation,
+    RHIFeature_DepthBoundsTest,
+    RHIFeature_GPUUploadHeapSupported,
+    RHIFeature_CopyQueueTimestampQuery,
+    RHIFeature_CacheCoherentUMA,
+    RHIFeature_ShaderOutputViewportIndex,
+    RHIFeature_Predication,
 
-    _GPUFeature_Force32 = 0x7FFFFFFF
-} GPUFeature;
+    _RHIFeature_Force32 = 0x7FFFFFFF
+} RHIFeature;
 
 /* Flags/Bitmask Enums */
-typedef uint32_t GPUBufferUsage;
-static const GPUBufferUsage GPUBufferUsage_None = 0;
-static const GPUBufferUsage GPUBufferUsage_Vertex = (1 << 0);
-static const GPUBufferUsage GPUBufferUsage_Index = (1 << 1);
+typedef uint32_t RHIBufferUsage;
+static const RHIBufferUsage GPUBufferUsage_None = 0;
+static const RHIBufferUsage GPUBufferUsage_Vertex = (1 << 0);
+static const RHIBufferUsage GPUBufferUsage_Index = (1 << 1);
 /// Supports Constant buffer access.
-static const GPUBufferUsage GPUBufferUsage_Constant = (1 << 2);
-static const GPUBufferUsage GPUBufferUsage_ShaderRead = (1 << 3);
-static const GPUBufferUsage GPUBufferUsage_ShaderWrite = (1 << 4);
+static const RHIBufferUsage GPUBufferUsage_Constant = (1 << 2);
+static const RHIBufferUsage GPUBufferUsage_ShaderRead = (1 << 3);
+static const RHIBufferUsage GPUBufferUsage_ShaderWrite = (1 << 4);
 /// Supports indirect buffer access for indirect draw/dispatch.
-static const GPUBufferUsage GPUBufferUsage_Indirect = (1 << 5);
+static const RHIBufferUsage GPUBufferUsage_Indirect = (1 << 5);
 /// Supports predication access for conditional rendering.
-static const GPUBufferUsage GPUBufferUsage_Predication = (1 << 6);
+static const RHIBufferUsage GPUBufferUsage_Predication = (1 << 6);
 /// Supports ray tracing acceleration structure usage.
-static const GPUBufferUsage GPUBufferUsage_RayTracing = (1 << 7);
+static const RHIBufferUsage GPUBufferUsage_RayTracing = (1 << 7);
 
-typedef uint32_t GPUTextureUsage;
-static const GPUTextureUsage GPUTextureUsage_None = 0;
-static const GPUTextureUsage GPUTextureUsage_ShaderRead = (1 << 0);
-static const GPUTextureUsage GPUTextureUsage_ShaderWrite = (1 << 1);
-static const GPUTextureUsage GPUTextureUsage_RenderTarget = (1 << 2);
-static const GPUTextureUsage GPUTextureUsage_Transient = (1 << 3);
-static const GPUTextureUsage GPUTextureUsage_ShadingRate = (1 << 4);
+typedef uint32_t RHITextureUsage;
+static const RHITextureUsage GPUTextureUsage_None = 0;
+static const RHITextureUsage GPUTextureUsage_ShaderRead = (1 << 0);
+static const RHITextureUsage GPUTextureUsage_ShaderWrite = (1 << 1);
+static const RHITextureUsage GPUTextureUsage_RenderTarget = (1 << 2);
+static const RHITextureUsage GPUTextureUsage_Transient = (1 << 3);
+static const RHITextureUsage GPUTextureUsage_ShadingRate = (1 << 4);
 /// Supports shared handle usage.
-static const GPUTextureUsage GPUTextureUsage_Shared = (1 << 5);
+static const RHITextureUsage GPUTextureUsage_Shared = (1 << 5);
 
-typedef uint32_t GPUColorWriteMask;
-static const GPUColorWriteMask GPUColorWriteMask_None = 0x0000000000000000;
-static const GPUColorWriteMask GPUColorWriteMask_Red = 0x0000000000000001;
-static const GPUColorWriteMask GPUColorWriteMask_Green = 0x0000000000000002;
-static const GPUColorWriteMask GPUColorWriteMask_Blue = 0x0000000000000004;
-static const GPUColorWriteMask GPUColorWriteMask_Alpha = 0x0000000000000008;
-static const GPUColorWriteMask GPUColorWriteMask_All = 0x000000000000000F /* Red | Green | Blue | Alpha */;
+typedef uint32_t RHIColorWriteMask;
+static const RHIColorWriteMask GPUColorWriteMask_None = 0x0000000000000000;
+static const RHIColorWriteMask GPUColorWriteMask_Red = 0x0000000000000001;
+static const RHIColorWriteMask GPUColorWriteMask_Green = 0x0000000000000002;
+static const RHIColorWriteMask GPUColorWriteMask_Blue = 0x0000000000000004;
+static const RHIColorWriteMask GPUColorWriteMask_Alpha = 0x0000000000000008;
+static const RHIColorWriteMask GPUColorWriteMask_All = 0x000000000000000F /* Red | Green | Blue | Alpha */;
 
 /* Structs */
 typedef struct RHIColor {
@@ -745,9 +729,69 @@ typedef struct RHIScissorRect {
     uint32_t height;
 } RHIScissorRect;
 
+
+typedef struct RHILimits {
+    uint32_t maxTextureDimension1D;
+    uint32_t maxTextureDimension2D;
+    uint32_t maxTextureDimension3D;
+    uint32_t maxTextureDimensionCube;
+    uint32_t maxTextureArrayLayers;
+    uint32_t maxBindGroups;
+    uint32_t maxConstantBufferBindingSize;
+    uint32_t maxStorageBufferBindingSize;
+    uint32_t minConstantBufferOffsetAlignment;
+    uint32_t minStorageBufferOffsetAlignment;
+    uint32_t maxPushConstantsSize;
+    uint64_t maxBufferSize;
+    uint32_t maxColorAttachments;
+    uint32_t maxViewports;
+    float    viewportBoundsMin;
+    float    viewportBoundsMax;
+
+    uint32_t maxComputeWorkgroupStorageSize;
+    uint32_t maxComputeInvocationsPerWorkgroup;
+    uint32_t maxComputeWorkgroupSizeX;
+    uint32_t maxComputeWorkgroupSizeY;
+    uint32_t maxComputeWorkgroupSizeZ;
+    uint32_t maxComputeWorkgroupsPerDimension;
+
+    /* Highest supported shader model */
+    GPUShaderModel shaderModel;
+
+    /* ConservativeRasterization tier */
+    RHIConservativeRasterizationTier conservativeRasterizationTier;
+
+    /* VariableRateShading tier */
+    GPUVariableRateShadingTier variableShadingRateTier;
+    uint32_t variableShadingRateImageTileSize;
+    Bool32 isAdditionalVariableShadingRatesSupported;
+
+    /* Ray tracing */
+    GPURayTracingTier rayTracingTier;
+    uint32_t rayTracingShaderGroupIdentifierSize;
+    uint32_t rayTracingShaderTableAlignment;
+    uint32_t rayTracingShaderTableMaxStride;
+    uint32_t rayTracingShaderRecursionMaxDepth;
+    uint32_t rayTracingMaxGeometryCount;
+    uint32_t rayTracingScratchAlignment;
+
+    /* Mesh shader */
+    GPUMeshShaderTier meshShaderTier;
+} RHILimits;
+
+typedef struct RHIAdapterInfo {
+    char deviceName[RHI_MAX_ADAPTER_NAME_SIZE];
+    uint16_t driverVersion[4];
+    const char* driverDescription;
+    RHIAdapterType adapterType;
+    RHIAdapterVendor vendor;
+    uint32_t vendorID;
+    uint32_t deviceID;
+} RHIAdapterInfo;
+
 typedef struct RHIFactoryDesc {
-    GPUBackendType preferredBackend;
-    GPUValidationMode validationMode;
+    RHIBackend preferredBackend;
+    RHIValidationMode validationMode;
 } RHIFactoryDesc;
 
 /* Indirect Commands Structs */
@@ -772,10 +816,42 @@ typedef struct RHIDrawIndirectCommand {
     uint32_t firstInstance;
 } RHIDrawIndirectCommand;
 
-/* Function */
+/* Log */
 typedef void (*RHILogCallback)(RHILogLevel level, const char* message, void* userData);
-ARHI_API RHILogLevel arhiGetLogLevel(void);
-ARHI_API void arhiSetLogLevel(RHILogLevel level);
-ARHI_API void arhiSetLogCallback(RHILogCallback func, void* userData);
+ARHI_API RHILogLevel RHIGetLogLevel(void);
+ARHI_API void RHISetLogLevel(RHILogLevel level);
+ARHI_API void RHISetLogCallback(RHILogCallback callback, void* userData);
+
+/* Factory */
+ARHI_API bool IsRHIBackendSupport(RHIBackend backend);
+ARHI_API RHIFactory RHIFactoryCreate(ARHI_NULLABLE const RHIFactoryDesc* desc);
+ARHI_API uint32_t RHIFactoryAddRef(RHIFactory factory);
+ARHI_API uint32_t RHIFactoryRelease(RHIFactory factory);
+ARHI_API RHIBackend RHIFactoryGetBackend(RHIFactory factory);
+ARHI_API uint32_t RHIFactoryGetAdapterCount(RHIFactory factory);
+ARHI_API RHIAdapter RHIFactoryGetAdapter(RHIFactory factory, uint32_t index);
+ARHI_API RHIAdapter RHIFactoryGetBestAdapter(RHIFactory factory);
+
+/* Adapter */
+ARHI_API void RHIAdapterGetInfo(RHIAdapter adapter, RHIAdapterInfo* info);
+
+/* SurfaceHandle */
+ARHI_API RHISurfaceSource RHISurfaceSourceCreateFromWin32(void* hwnd);
+ARHI_API RHISurfaceSource RHISurfaceSourceCreateFromAndroid(void* window);
+ARHI_API RHISurfaceSource RHISurfaceSourceCreateFromMetalLayer(void* metalLayer);
+ARHI_API RHISurfaceSource RHISurfaceSourceCreateFromXlib(void* display, uint64_t window);
+ARHI_API RHISurfaceSource RHISurfaceSourceCreateFromWayland(void* display, void* surface);
+ARHI_API void RHISurfaceSourceDestroy(RHISurfaceSource source);
+
+/* Surface */
+ARHI_API RHISurface RHISurfaceCreate(RHIFactory factory, RHISurfaceSource source);
+ARHI_API uint32_t RHISurfaceAddRef(RHISurface surface);
+ARHI_API uint32_t RHISurfaceRelease(RHISurface surface);
+
+/* Other */
+ARHI_API uint32_t RHIVertexFormatGetByteSize(RHIVertexFormat format);
+ARHI_API uint32_t RHIVertexFormatGetComponentCount(RHIVertexFormat format);
+ARHI_API RHIAdapterVendor RHIAdapterVendorFromID(uint32_t vendorId);
+ARHI_API uint32_t RHIAdapterVendorToID(RHIAdapterVendor vendor);
 
 #endif /* ARHI_H_ */
