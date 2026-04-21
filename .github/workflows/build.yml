@@ -1,0 +1,87 @@
+name: Build
+
+on:
+  workflow_dispatch:  
+  push:
+    branches:
+      - 'main'
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+
+    - name: Get CMake and Ninja
+      uses: lukka/get-cmake@latest
+      with:
+        cmakeVersion: latestrc
+        ninjaVersion: latest
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v3
+      
+    - name: Configure win-x64
+      run: cmake -S "." -B "build_win_64" -G "Visual Studio 18 2026" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="win-x64-sdk" -DARHI_BUILD_SAMPLES=OFF
+    - name: Build win-x64
+      run: cmake --build build_win_64 --target install --config Release
+
+    - uses: actions/upload-artifact@v7
+      with:
+        name: win-x64-sdk
+        path: win-x64-sdk
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Get CMake and Ninja
+      uses: lukka/get-cmake@latest
+      with:
+        cmakeVersion: latestrc
+        ninjaVersion: latest
+
+    - name: Install dependencies on Ubuntu
+      run: |
+        sudo apt-get update
+        sudo apt install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev libwayland-dev libxkbcommon-dev
+        sudo apt install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+    - name: CMake Configure (linux-x64)
+      run: cmake -S "." -B "build_linux_x64" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="linux-x64-sdk" -DARHI_BUILD_SAMPLES=OFF
+    - name: Build linux-x64
+      run: cmake --build build_linux_x64 --target install --config Release --verbose --parallel 
+     
+    - uses: actions/upload-artifact@v7
+      with:
+        name: linux-x64-sdk
+        path: linux-x64-sdk
+
+  macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Get CMake and Ninja
+      uses: lukka/get-cmake@latest
+      with:
+        cmakeVersion: latestrc
+        ninjaVersion: latest
+
+    - name: CMake Configure (osx-universal)
+      run: cmake -S "." -B "build_osx" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_INSTALL_PREFIX="osx-sdk" -DARHI_BUILD_SAMPLES=OFF
+    - name: Build osx-universal
+      run: cmake --build build_osx --target install --config Release --verbose --parallel 
+     
+    - uses: actions/upload-artifact@v4
+      with:
+        name: osx-sdk
+        path: osx-sdk

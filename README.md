@@ -1,2 +1,2 @@
 # arhi
-A low-level cross platform RHI library
+A low-level cross platform Render Hardware Interface (RHI) library
