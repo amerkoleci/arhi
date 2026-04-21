@@ -318,6 +318,12 @@ if (ARHI_METAL)
     )
     target_compile_definitions (${TARGET_NAME} PRIVATE ARHI_METAL)
     target_link_libraries(${TARGET_NAME} PRIVATE arhi-metal-cpp)
+    
+    target_link_libraries(${TARGET_NAME} PRIVATE
+        "-framework Metal"
+        "-framework Foundation"
+        "-framework QuartzCore"
+    )
 endif()
 
 # Add samples subdirectoy
